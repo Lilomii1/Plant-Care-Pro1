@@ -29,6 +29,12 @@
         ::-webkit-scrollbar-thumb { background: #2d6a4f; border-radius: 10px; }
         .badge-water { background: #e0f2fe; color: #0369a1; }
         .badge-phase { background: #dcfce7; color: #166534; }
+        /* ДОБАВЛЕНО: стили для превью изображений */
+        .image-preview { width: 60px; height: 60px; object-fit: cover; border-radius: 12px; background: #f0f4f8; }
+        .plant-image { width: 40px; height: 40px; object-fit: cover; border-radius: 12px; }
+        .fertilizer-image { width: 48px; height: 48px; object-fit: contain; }
+        .image-upload-area { border: 2px dashed #cbd5e1; border-radius: 16px; padding: 16px; text-align: center; cursor: pointer; transition: all 0.2s; }
+        .image-upload-area:hover { border-color: #2d6a4f; background: #f0fdf4; }
     </style>
 </head>
 <body class="bg-[#f0f4f8] text-gray-800 h-screen overflow-hidden">
@@ -205,17 +211,27 @@
                 this.init();
             }
 
+            // ДОБАВЛЕНО: Функция для конвертации файла в base64
+            fileToBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = error => reject(error);
+                });
+            }
+
             loadData() {
                 const saved = localStorage.getItem('plantCareData');
                 if (saved) { this.data = JSON.parse(saved); this.data.settings.currentDate = new Date(this.data.settings.currentDate || new Date()); this.currentMonth = new Date(this.data.settings.currentDate); }
                 if (!this.data.fertilizers || Object.keys(this.data.fertilizers).length === 0) {
                     this.data.fertilizers = {
-                        'grow': { id: 'grow', name: 'BioGrow', npk: { n: 4, p: 2, k: 3 }, density: 1 },
-                        'bloom': { id: 'bloom', name: 'BioBloom', npk: { n: 2, p: 5, k: 4 }, density: 1 }
+                        'grow': { id: 'grow', name: 'BioGrow', npk: { n: 4, p: 2, k: 3 }, density: 1, image: null },
+                        'bloom': { id: 'bloom', name: 'BioBloom', npk: { n: 2, p: 5, k: 4 }, density: 1, image: null }
                     };
                 }
                 if (!this.data.recipes || Object.keys(this.data.recipes).length === 0) {
-                    this.data.recipes = { 'veg': { id: 'veg', name: 'Вегетация', volume: 1, fertilizers: [{ fertilizerId: 'grow', dose: 2 }] } };
+                    this.data.recipes = { 'veg': { id: 'veg', name: 'Вегетация стандарт', volume: 1, fertilizers: [{ fertilizerId: 'grow', dose: 2 }], image: null } };
                 }
                 if (!this.data.lightPhases) this.data.lightPhases = {};
                 this.saveData();
@@ -292,7 +308,12 @@
                     const div = document.createElement('div');
                     div.className = `cursor-pointer rounded-xl p-3 transition-all ${isSelected ? 'bg-[#e6f4ea] border border-[#2d6a4f]/30' : 'bg-gray-50 hover:bg-gray-100'} border border-gray-100`;
                     div.onclick = () => { this.data.settings.selectedPlant = p.id; this.saveData(); this.renderUI(); this.renderCalendar(); };
-                    div.innerHTML = `<div class="flex items-center gap-3"><div class="w-9 h-9 rounded-full bg-[#e6f4ea] flex items-center justify-center text-lg">🌿</div><div class="flex-1"><div class="font-medium ${needWater ? 'text-red-600' : ''}">${p.name}</div><div class="text-xs text-gray-500">День ${this.getDays(p.id, new Date())}</div></div>${needWater ? '<span class="text-red-500 text-sm animate-pulse">💧</span>' : ''}</div>`;
+                    // ДОБАВЛЕНО: отображение картинки растения в списке
+                    div.innerHTML = `<div class="flex items-center gap-3">
+                        ${p.image ? `<img src="${p.image}" class="plant-image rounded-xl object-cover w-10 h-10">` : `<div class="w-10 h-10 rounded-xl bg-[#e6f4ea] flex items-center justify-center text-lg">🌿</div>`}
+                        <div class="flex-1"><div class="font-medium ${needWater ? 'text-red-600' : ''}">${p.name}</div><div class="text-xs text-gray-500">День ${this.getDays(p.id, new Date())}</div></div>
+                        ${needWater ? '<span class="text-red-500 text-sm animate-pulse">💧</span>' : ''}
+                    </div>`;
                     container.appendChild(div);
                 });
             }
@@ -313,7 +334,14 @@
                 const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
                 document.getElementById('current-month').innerHTML = `${monthNames[month]} ${year}`;
 
-                let html = `<div class="bg-white rounded-2xl shadow-sm overflow-hidden"><div class="p-4 border-b border-gray-100"><h3 class="font-semibold text-lg">${selected.name}</h3></div><div class="grid grid-cols-7 text-center py-2 text-xs font-medium text-gray-500 border-b border-gray-100"><div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div></div><div class="grid grid-cols-7">`;
+                // ДОБАВЛЕНО: отображение картинки растения в календаре
+                let html = `<div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+                    <div class="p-4 border-b border-gray-100 flex items-center gap-3">
+                        ${selected.image ? `<img src="${selected.image}" class="w-12 h-12 rounded-xl object-cover">` : `<div class="w-12 h-12 rounded-xl bg-[#e6f4ea] flex items-center justify-center text-2xl">🌿</div>`}
+                        <h3 class="font-semibold text-lg">${selected.name}</h3>
+                    </div>
+                    <div class="grid grid-cols-7 text-center py-2 text-xs font-medium text-gray-500 border-b border-gray-100"><div>Пн</div><div>Вт</div><div>Ср</div><div>Чт</div><div>Пт</div><div>Сб</div><div>Вс</div></div>
+                    <div class="grid grid-cols-7">`;
                 for (let i=0; i<42; i++) {
                     const d = new Date(start); d.setDate(start.getDate()+i);
                     const isCurr = d.getMonth() === month;
@@ -340,13 +368,31 @@
             renderFerts() {
                 const grid = document.getElementById('fertilizers-grid');
                 const ferts = Object.values(this.data.fertilizers);
-                grid.innerHTML = ferts.map(f => `<div class="bg-white rounded-xl p-4 shadow-sm"><div class="flex justify-between items-center"><div class="font-medium">${f.name}</div><div><button onclick="app.editFert('${f.id}')" class="text-xs text-gray-500 mr-2">✏️</button><button onclick="app.delFert('${f.id}')" class="text-xs text-red-500">🗑️</button></div></div><div class="flex gap-3 mt-2 text-sm"><span>N ${f.npk.n}%</span><span>P ${f.npk.p}%</span><span>K ${f.npk.k}%</span></div></div>`).join('');
+                // ДОБАВЛЕНО: отображение картинки удобрения
+                grid.innerHTML = ferts.map(f => `<div class="bg-white rounded-xl p-4 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div class="flex gap-3">
+                            ${f.image ? `<img src="${f.image}" class="fertilizer-image w-12 h-12 rounded-xl object-cover">` : `<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-100 to-emerald-100 flex items-center justify-center text-2xl">🧪</div>`}
+                            <div><div class="font-medium">${f.name}</div><div class="flex gap-3 mt-1 text-sm"><span>N ${f.npk.n}%</span><span>P ${f.npk.p}%</span><span>K ${f.npk.k}%</span></div></div>
+                        </div>
+                        <div><button onclick="app.editFert('${f.id}')" class="text-xs text-gray-500 mr-2">✏️</button><button onclick="app.delFert('${f.id}')" class="text-xs text-red-500">🗑️</button></div>
+                    </div>
+                </div>`).join('');
             }
 
             renderRecipes() {
                 const cont = document.getElementById('recipes-list');
                 const recs = Object.values(this.data.recipes);
-                cont.innerHTML = recs.map(r => `<div class="bg-white rounded-xl p-4 shadow-sm"><div class="flex justify-between"><span class="font-medium">${r.name}</span><div><button onclick="app.editRec('${r.id}')" class="text-xs text-gray-500 mr-2">✏️</button><button onclick="app.delRec('${r.id}')" class="text-xs text-red-500">🗑️</button></div></div><div class="text-sm text-gray-500 mt-1">📏 ${r.volume}л • Удобрений: ${r.fertilizers.length}</div></div>`).join('');
+                // ДОБАВЛЕНО: отображение картинки рецепта
+                cont.innerHTML = recs.map(r => `<div class="bg-white rounded-xl p-4 shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div class="flex gap-3">
+                            ${r.image ? `<img src="${r.image}" class="w-12 h-12 rounded-xl object-cover">` : `<div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-cyan-100 flex items-center justify-center text-2xl">📖</div>`}
+                            <div><div class="font-medium">${r.name}</div><div class="text-sm text-gray-500 mt-1">📏 ${r.volume}л • Удобрений: ${r.fertilizers.length}</div></div>
+                        </div>
+                        <div><button onclick="app.editRec('${r.id}')" class="text-xs text-gray-500 mr-2">✏️</button><button onclick="app.delRec('${r.id}')" class="text-xs text-red-500">🗑️</button></div>
+                    </div>
+                </div>`).join('');
             }
 
             renderHistory() {
@@ -362,26 +408,192 @@
                 document.getElementById('average-volume').innerText = total ? (totalVol/total).toFixed(1)+'л' : '0л';
             }
 
-            // Модалки
-            showPlantModal() {
+            // ДОБАВЛЕНО: улучшенная модалка растения с картинкой
+            showPlantModal(plantId = null) {
                 const modal = document.getElementById('plant-modal');
+                const plant = plantId ? this.data.plants[plantId] : null;
                 modal.classList.remove('hidden');
-                modal.innerHTML = `<div class="bg-white rounded-2xl p-6"><h2 class="text-xl font-semibold mb-4">🌱 Новое растение</h2><form id="plant-form"><input id="plant-name" placeholder="Название" class="w-full mb-3" required><input id="plant-date" type="date" class="w-full mb-3" required><input id="plant-strain" placeholder="Сорт (опционально)" class="w-full mb-4"><div class="flex gap-3"><button type="submit" class="flex-1 bg-[#2d6a4f] text-white py-2 rounded-xl">Сохранить</button><button type="button" id="plant-cancel" class="flex-1 border border-gray-300 py-2 rounded-xl">Отмена</button></div></form></div>`;
-                document.getElementById('plant-form').onsubmit = (e) => {
+                modal.innerHTML = `<div class="bg-white rounded-2xl p-6">
+                    <h2 class="text-xl font-semibold mb-4">${plant ? '✏️ Редактировать' : '🌱 Новое растение'}</h2>
+                    <form id="plant-form">
+                        <div id="plant-image-area" class="image-upload-area mb-4">
+                            ${plant?.image ? `<img src="${plant.image}" class="image-preview w-24 h-24 mx-auto rounded-xl object-cover mb-2">` : '<div class="text-4xl mb-2">🌿</div>'}
+                            <div class="text-sm text-gray-500">Нажмите для загрузки фото</div>
+                            <input type="file" id="plant-image-input" accept="image/*" style="display: none;">
+                        </div>
+                        <input id="plant-name" placeholder="Название" class="w-full mb-3" value="${plant?.name || ''}" required>
+                        <input id="plant-date" type="date" class="w-full mb-3" value="${plant?.plantDate || ''}" required>
+                        <input id="plant-strain" placeholder="Сорт (опционально)" class="w-full mb-4" value="${plant?.strain || ''}">
+                        <div class="flex gap-3">
+                            <button type="submit" class="flex-1 bg-[#2d6a4f] text-white py-2 rounded-xl">Сохранить</button>
+                            <button type="button" id="plant-cancel" class="flex-1 border border-gray-300 py-2 rounded-xl">Отмена</button>
+                        </div>
+                    </form>
+                </div>`;
+                
+                let selectedImage = plant?.image || null;
+                const imageArea = document.getElementById('plant-image-area');
+                const imageInput = document.getElementById('plant-image-input');
+                
+                imageArea.onclick = () => imageInput.click();
+                imageInput.onchange = async (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        selectedImage = await this.fileToBase64(e.target.files[0]);
+                        const preview = imageArea.querySelector('img');
+                        if (preview) {
+                            preview.src = selectedImage;
+                        } else {
+                            imageArea.innerHTML = `<img src="${selectedImage}" class="image-preview w-24 h-24 mx-auto rounded-xl object-cover mb-2"><div class="text-sm text-gray-500">Нажмите для замены фото</div><input type="file" id="plant-image-input" accept="image/*" style="display: none;">`;
+                            document.getElementById('plant-image-input').onchange = imageInput.onchange;
+                        }
+                    }
+                };
+                
+                document.getElementById('plant-form').onsubmit = async (e) => {
                     e.preventDefault();
-                    const id = 'p'+Date.now();
-                    this.data.plants[id] = { id, name: document.getElementById('plant-name').value, plantDate: document.getElementById('plant-date').value, strain: document.getElementById('plant-strain').value, growthPhases: { vegetation: 28, flowering: 63 } };
+                    const id = plantId || 'p'+Date.now();
+                    this.data.plants[id] = { 
+                        id, 
+                        name: document.getElementById('plant-name').value, 
+                        plantDate: document.getElementById('plant-date').value, 
+                        strain: document.getElementById('plant-strain').value,
+                        image: selectedImage,
+                        growthPhases: plant?.growthPhases || { vegetation: 28, flowering: 63 }
+                    };
                     this.saveData();
+                    if (!plantId) this.data.settings.selectedPlant = id;
                     this.renderUI();
                     modal.classList.add('hidden');
                 };
                 document.getElementById('plant-cancel').onclick = () => modal.classList.add('hidden');
             }
 
+            // ДОБАВЛЕНО: улучшенная модалка удобрения с картинкой
+            showFertModal(fertId = null) {
+                const modal = document.getElementById('fertilizer-modal');
+                const fert = fertId ? this.data.fertilizers[fertId] : null;
+                modal.classList.remove('hidden');
+                modal.innerHTML = `<div class="bg-white rounded-2xl p-6">
+                    <h2 class="text-xl font-semibold mb-4">${fert ? '✏️ Редактировать' : '➕ Добавить удобрение'}</h2>
+                    <form id="fert-form">
+                        <div id="fert-image-area" class="image-upload-area mb-4">
+                            ${fert?.image ? `<img src="${fert.image}" class="image-preview w-24 h-24 mx-auto rounded-xl object-cover mb-2">` : '<div class="text-4xl mb-2">🧪</div>'}
+                            <div class="text-sm text-gray-500">Нажмите для загрузки фото</div>
+                            <input type="file" id="fert-image-input" accept="image/*" style="display: none;">
+                        </div>
+                        <input id="fert-name" placeholder="Название" class="w-full mb-3" value="${fert?.name || ''}">
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <input id="fert-n" placeholder="N %" class="text-center" value="${fert?.npk.n || ''}">
+                            <input id="fert-p" placeholder="P %" class="text-center" value="${fert?.npk.p || ''}">
+                            <input id="fert-k" placeholder="K %" class="text-center" value="${fert?.npk.k || ''}">
+                        </div>
+                        <div class="flex gap-3">
+                            <button type="submit" class="flex-1 bg-[#2d6a4f] text-white py-2 rounded-xl">Сохранить</button>
+                            <button type="button" id="fert-cancel" class="flex-1 border border-gray-300 py-2 rounded-xl">Отмена</button>
+                        </div>
+                    </form>
+                </div>`;
+                
+                let selectedImage = fert?.image || null;
+                const imageArea = document.getElementById('fert-image-area');
+                const imageInput = document.getElementById('fert-image-input');
+                
+                imageArea.onclick = () => imageInput.click();
+                imageInput.onchange = async (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        selectedImage = await this.fileToBase64(e.target.files[0]);
+                        const preview = imageArea.querySelector('img');
+                        if (preview) {
+                            preview.src = selectedImage;
+                        } else {
+                            imageArea.innerHTML = `<img src="${selectedImage}" class="image-preview w-24 h-24 mx-auto rounded-xl object-cover mb-2"><div class="text-sm text-gray-500">Нажмите для замены фото</div><input type="file" id="fert-image-input" accept="image/*" style="display: none;">`;
+                            document.getElementById('fert-image-input').onchange = imageInput.onchange;
+                        }
+                    }
+                };
+                
+                document.getElementById('fert-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    const id = fertId || 'f'+Date.now();
+                    this.data.fertilizers[id] = { 
+                        id, 
+                        name: document.getElementById('fert-name').value, 
+                        npk: { 
+                            n: parseFloat(document.getElementById('fert-n').value)||0, 
+                            p: parseFloat(document.getElementById('fert-p').value)||0, 
+                            k: parseFloat(document.getElementById('fert-k').value)||0 
+                        }, 
+                        density: 1,
+                        image: selectedImage
+                    };
+                    this.saveData();
+                    this.renderFerts();
+                    modal.classList.add('hidden');
+                };
+                document.getElementById('fert-cancel').onclick = () => modal.classList.add('hidden');
+            }
+
+            // ДОБАВЛЕНО: улучшенная модалка рецепта с картинкой
+            showRecipeModal(recipeId = null) {
+                const modal = document.getElementById('recipe-modal');
+                const recipe = recipeId ? this.data.recipes[recipeId] : null;
+                modal.classList.remove('hidden');
+                modal.innerHTML = `<div class="bg-white rounded-2xl p-6">
+                    <h2 class="text-xl font-semibold mb-4">${recipe ? '✏️ Редактировать' : '📖 Создать рецепт'}</h2>
+                    <form id="rec-form">
+                        <div id="rec-image-area" class="image-upload-area mb-4">
+                            ${recipe?.image ? `<img src="${recipe.image}" class="image-preview w-24 h-24 mx-auto rounded-xl object-cover mb-2">` : '<div class="text-4xl mb-2">📖</div>'}
+                            <div class="text-sm text-gray-500">Нажмите для загрузки фото</div>
+                            <input type="file" id="rec-image-input" accept="image/*" style="display: none;">
+                        </div>
+                        <input id="rec-name" placeholder="Название" class="w-full mb-3" value="${recipe?.name || ''}">
+                        <input id="rec-vol" placeholder="Объем (л)" class="w-full mb-4" value="${recipe?.volume || ''}">
+                        <div class="flex gap-3">
+                            <button type="submit" class="flex-1 bg-[#2d6a4f] text-white py-2 rounded-xl">Сохранить</button>
+                            <button type="button" id="rec-cancel" class="flex-1 border border-gray-300 py-2 rounded-xl">Отмена</button>
+                        </div>
+                    </form>
+                </div>`;
+                
+                let selectedImage = recipe?.image || null;
+                const imageArea = document.getElementById('rec-image-area');
+                const imageInput = document.getElementById('rec-image-input');
+                
+                imageArea.onclick = () => imageInput.click();
+                imageInput.onchange = async (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        selectedImage = await this.fileToBase64(e.target.files[0]);
+                        const preview = imageArea.querySelector('img');
+                        if (preview) {
+                            preview.src = selectedImage;
+                        } else {
+                            imageArea.innerHTML = `<img src="${selectedImage}" class="image-preview w-24 h-24 mx-auto rounded-xl object-cover mb-2"><div class="text-sm text-gray-500">Нажмите для замены фото</div><input type="file" id="rec-image-input" accept="image/*" style="display: none;">`;
+                            document.getElementById('rec-image-input').onchange = imageInput.onchange;
+                        }
+                    }
+                };
+                
+                document.getElementById('rec-form').onsubmit = (e) => {
+                    e.preventDefault();
+                    const id = recipeId || 'r'+Date.now();
+                    this.data.recipes[id] = { 
+                        id, 
+                        name: document.getElementById('rec-name').value, 
+                        volume: parseFloat(document.getElementById('rec-vol').value)||1, 
+                        fertilizers: recipe?.fertilizers || [],
+                        image: selectedImage
+                    };
+                    this.saveData();
+                    this.renderRecipes();
+                    modal.classList.add('hidden');
+                };
+                document.getElementById('rec-cancel').onclick = () => modal.classList.add('hidden');
+            }
+
             showWaterModal() {
                 const modal = document.getElementById('watering-modal');
                 modal.classList.remove('hidden');
-                const plantsHtml = Object.values(this.data.plants).map(p => `<label class="flex items-center gap-2 mb-2"><input type="checkbox" name="water-plants" value="${p.id}" class="rounded border-gray-300"> ${p.name}</label>`).join('');
+                const plantsHtml = Object.values(this.data.plants).map(p => `<label class="flex items-center gap-2 mb-2"><input type="checkbox" name="water-plants" value="${p.id}" class="rounded border-gray-300"> <span>${p.name}</span></label>`).join('');
                 modal.innerHTML = `<div class="bg-white rounded-2xl p-6"><h2 class="text-xl font-semibold mb-4">💧 Полив</h2><form id="water-form"><input id="water-vol" type="number" step="0.1" placeholder="Объем (л)" class="w-full mb-3" required><div class="mb-4">${plantsHtml}</div><button type="submit" class="w-full bg-[#2d6a4f] text-white py-2 rounded-xl">Записать полив</button></form><button id="water-cancel" class="w-full mt-3 text-gray-500 text-sm">Отмена</button></div>`;
                 document.getElementById('water-form').onsubmit = (e) => {
                     e.preventDefault();
@@ -395,36 +607,6 @@
                     modal.classList.add('hidden');
                 };
                 document.getElementById('water-cancel').onclick = () => modal.classList.add('hidden');
-            }
-
-            showFertModal() {
-                const modal = document.getElementById('fertilizer-modal');
-                modal.classList.remove('hidden');
-                modal.innerHTML = `<div class="bg-white rounded-2xl p-6"><h2 class="text-xl font-semibold mb-4">Добавить удобрение</h2><form id="fert-form"><input id="fert-name" placeholder="Название" class="w-full mb-3"><div class="grid grid-cols-3 gap-2 mb-4"><input id="fert-n" placeholder="N %" class="text-center"><input id="fert-p" placeholder="P %" class="text-center"><input id="fert-k" placeholder="K %" class="text-center"></div><button type="submit" class="w-full bg-[#2d6a4f] text-white py-2 rounded-xl">Сохранить</button></form><button id="fert-cancel" class="w-full mt-3 text-gray-500 text-sm">Отмена</button></div>`;
-                document.getElementById('fert-form').onsubmit = (e) => {
-                    e.preventDefault();
-                    const id = 'f'+Date.now();
-                    this.data.fertilizers[id] = { id, name: document.getElementById('fert-name').value, npk: { n: parseFloat(document.getElementById('fert-n').value)||0, p: parseFloat(document.getElementById('fert-p').value)||0, k: parseFloat(document.getElementById('fert-k').value)||0 }, density: 1 };
-                    this.saveData();
-                    this.renderFerts();
-                    modal.classList.add('hidden');
-                };
-                document.getElementById('fert-cancel').onclick = () => modal.classList.add('hidden');
-            }
-
-            showRecipeModal() {
-                const modal = document.getElementById('recipe-modal');
-                modal.classList.remove('hidden');
-                modal.innerHTML = `<div class="bg-white rounded-2xl p-6"><h2 class="text-xl font-semibold mb-4">Создать рецепт</h2><form id="rec-form"><input id="rec-name" placeholder="Название" class="w-full mb-3"><input id="rec-vol" placeholder="Объем (л)" class="w-full mb-4"><button type="submit" class="w-full bg-[#2d6a4f] text-white py-2 rounded-xl">Сохранить</button></form><button id="rec-cancel" class="w-full mt-3 text-gray-500 text-sm">Отмена</button></div>`;
-                document.getElementById('rec-form').onsubmit = (e) => {
-                    e.preventDefault();
-                    const id = 'r'+Date.now();
-                    this.data.recipes[id] = { id, name: document.getElementById('rec-name').value, volume: parseFloat(document.getElementById('rec-vol').value)||1, fertilizers: [] };
-                    this.saveData();
-                    this.renderRecipes();
-                    modal.classList.add('hidden');
-                };
-                document.getElementById('rec-cancel').onclick = () => modal.classList.add('hidden');
             }
 
             showSettings() {
@@ -459,6 +641,9 @@
             init() { this.loadData(); this.initEvents(); this.renderUI(); }
         }
         window.app = new PlantApp();
+        
+        // ДОБАВЛЕНО: Обработчик импорта
+        document.getElementById('data-import-input').addEventListener('change', (e) => window.app.importData(e));
     </script>
 </body>
 </html>
