@@ -4,7 +4,7 @@
 
 ## 📸 Скриншоты
 <div align="center">
-  <img src="images/screenshot1.jpg" alt="Главный экран" width="18%" height="150" />
+  <img src="images/Снимок.PNG" alt="Главный экран" width="18%" height="150" />
   <img src="images/screenshot2.jpg" alt="Рецепты" width="18%" height="150" />
   <img src="images/screenshot3.jpg" alt="Добавление растения" width="18%" height="150" />
   <img src="images/screenshot4.jpg" alt="Мобильная версия" width="18%" height="150" />
