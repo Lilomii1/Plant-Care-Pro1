@@ -11,8 +11,8 @@
             <td align="center"><b>Рецепты ухода</b></td>
         </tr>
         <tr>
-            <td><img src="plant_care_planner/images/Screenshot_20260430_131429.png" width="300"></td>
-            <td><img src="plant_care_planner/images/Screenshot_20260430_131528.png" width="300"></td>
+            <td><img src="Screenshot_20260430_131429.png" width="300"></td>
+            <td><img src="Screenshot_20260430_131528.png" width="300"></td>
         </tr>
     </table>
 </div>
