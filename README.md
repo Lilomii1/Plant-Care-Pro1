@@ -4,8 +4,8 @@
 
 ## 📸 Скриншоты
 <div align="center">
-  <img src="images/images1.PNG" alt="Главный экран" width="18%" height="150" />
-  <img src="images/images2.PNG" alt="Рецепты" width="18%" height="150" />
+  <img src="images/Screenshot_20260430_131429.png" alt="Главный экран" width="18%" height="150" />
+  <img src="images/Screenshot_20260430_131528.png" alt="Рецепты" width="18%" height="150" />
 </div>
 
 ## ✨ Основные возможности
