@@ -4,10 +4,8 @@
 
 ## 📸 Скриншоты
 <div align="center">
-  <img src="images/Снимок.PNG" alt="Главный экран" width="18%" height="150" />
-  <img src="images/Снимок1.PNG" alt="Рецепты" width="18%" height="150" />
-  <img src="images/Снимок2.PNG" alt="Добавление растения" width="18%" height="150" />
-  <img src="images/Снимок3.PNG" alt="Мобильная версия" width="18%" height="150" />
+  <img src="images/images1.PNG" alt="Главный экран" width="18%" height="150" />
+  <img src="images/images2.PNG" alt="Рецепты" width="18%" height="150" />
 </div>
 
 ## ✨ Основные возможности
